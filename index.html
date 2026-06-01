@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Regulated Agentic Platform Architecture v2</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    * { font-family: 'IBM Plex Sans', sans-serif; box-sizing: border-box; }
+    code, pre, .font-mono { font-family: 'IBM Plex Mono', monospace !important; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    @keyframes ping { 75%,100%{transform:scale(2);opacity:0} }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    @keyframes slideRight { from{opacity:0;transform:translateX(1.5rem)} to{opacity:1;transform:translateX(0)} }
+    @keyframes slideDown { from{opacity:0;transform:translateY(-0.5rem)} to{opacity:1;transform:translateY(0)} }
+    .animate-ping { animation: ping 1s cubic-bezier(0,0,0.2,1) infinite; }
+    .anim-fade { animation: fadeIn 0.35s ease-out; }
+    .anim-slide-right { animation: slideRight 0.35s ease-out; }
+    .anim-slide-down { animation: slideDown 0.25s ease-out; }
+    .tab-active-bar { position:absolute; bottom:-1px; left:0; width:100%; height:2px; background:#0D74CE; }
+    table { border-collapse: collapse; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+
+const COLORS = { orange: '#F08200', lightBlue: '#57C6DA', darkBlue: '#0D74CE' };
+
+// ─── ICON COMPONENT ──────────────────────────────────────────────────────────
+const Icon = ({ name, size = 16, className = '', style = {} }) => {
+  const icons = {
+    Layers: 'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5',
+    ShieldCheck: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z M9 12l2 2 4-4',
+    BrainCircuit: 'M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z M9 13a4.5 4.5 0 0 0 3-4M6.003 5.125A3 3 0 0 0 6.401 6.5M3.477 10.896a4 4 0 0 1 .585-.396M6 18a4 4 0 0 1-1.967-.516M12 13h4a2 2 0 0 1 0 4h-2.5M12 5h2a2 2 0 0 1 0 4H12',
+    Database: 'M12 2C8.13 2 5 3.34 5 5v14c0 1.66 3.13 3 7 3s7-1.34 7-3V5c0-1.66-3.13-3-7-3zM5 12c0 1.66 3.13 3 7 3s7-1.34 7-3M5 8.5c0 1.66 3.13 3 7 3s7-1.34 7-3',
+    Activity: 'M22 12h-4l-3 9L9 3l-3 9H2',
+    Fingerprint: 'M2 12C2 6.48 6.48 2 12 2s10 4.48 10 10M5.5 12a6.5 6.5 0 1 1 13 0M9 12a3 3 0 1 1 6 0',
+    Cpu: 'M18 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zM10 8h4M10 12h4M10 16h4M8 8h.01M8 12h.01M8 16h.01',
+    Globe: 'M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zM2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z',
+    Network: 'M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v11M5 9H3m6 0h10m0-6h2a2 2 0 0 1 2 2v4M9 14v7m0 0H5a2 2 0 0 1-2-2v-5m6 7h10a2 2 0 0 0 2-2v-5',
+    Terminal: 'M4 17l6-6-6-6M12 19h8',
+    Users: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
+    Scale: 'M16 16L12 12 8 16M12 12V6M20 20H4M7 20c0-2.21 2.24-4 5-4s5 1.79 5 4',
+    Landmark: 'M3 22h18M6 18v-7M10 18v-7M14 18v-7M18 18v-7M12 2L2 7h20L12 2z',
+    ListChecks: 'M9 7h11M9 12h11M9 17h11M5 7h.01M5 12h.01M5 17h.01',
+    FileText: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6M16 13H8M16 17H8M10 9H8',
+    FileJson: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6M10 13c-.5.5-1 1-1 2s.5 1.5 1 2M14 13c.5.5 1 1 1 2s-.5 1.5-1 2',
+    ServerCog: 'M2 9a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9zM6 12h.01M10 12h.01M16 12a2 2 0 1 1 4 0 2 2 0 0 1-4 0',
+    GitBranch: 'M6 3v12M18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 9a9 9 0 0 1-9 9',
+    Cloud: 'M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z',
+    BarChart3: 'M3 3v18h18M18 17V9M12 17V5M6 17v-3',
+    DollarSign: 'M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
+    ArrowRightLeft: 'M21 7H3M21 7l-4-4M21 7l-4 4M3 17h18M3 17l4-4M3 17l4 4',
+    GitCompare: 'M18 7V4l3 3-3 3V7a6 6 0 0 1-6 6H6M6 17v3l-3-3 3-3v3a6 6 0 0 0 6-6h6',
+    LayoutDashboard: 'M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z',
+    X: 'M18 6L6 18M6 6l12 12',
+    ShieldBan: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 9l6 6M15 9l-6 6',
+    Clock: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 6v6l4 2',
+    Wallet: 'M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM16 14a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM2 10h20',
+    PieChart: 'M12 2v10l4.24 4.24M12 22a10 10 0 1 1 4.24-19.07',
+    TrendingDown: 'M23 18l-9.5-9.5-5 5L1 6M17 18h6v-6',
+    TrendingUp: 'M23 6l-9.5 9.5-5-5L1 18M17 6h6v6',
+    Bot: 'M12 8V4H8M4 8h.01M20 8h.01M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8zM8 12H4M20 12h-4M8 20h8M12 16v4',
+    MessageSquare: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',
+    Lightbulb: 'M15 14c.2-1 .7-1.7 1.5-2.5C17.4 10.4 18 9.3 18 8a6 6 0 0 0-12 0c0 1.3.6 2.4 1.5 3.5.8.8 1.3 1.5 1.5 2.5M9 18h6M10 22h4',
+    UserPlus: 'M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M8.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM20 8v6M23 11h-6',
+    ChevronDown: 'M6 9l6 6 6-6',
+    ChevronUp: 'M18 15l-6-6-6 6',
+    ChevronRight: 'M9 18l6-6-6-6',
+    Filter: 'M22 3H2l8 9.46V19l4 2v-8.54L22 3z',
+    Target: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
+    AlertTriangle: 'M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01',
+    Zap: 'M13 2L3 14h9l-1 8 10-12h-9l1-8z',
+    CheckCircle2: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM9 12l2 2 4-4',
+    Workflow: 'M17 20h5v-2a3 3 0 0 0-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 0 1 5.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 0 1 9.288 0',
+    SearchCode: 'M11 3a8 8 0 1 0 0 16A8 8 0 0 0 11 3zM21 21l-4.35-4.35M8 9l3 3-3 3',
+    Settings: 'M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41',
+    Package: 'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16zM3.29 7L12 12l8.71-5M12 22V12',
+    GitMerge: 'M18 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 9v4c0 1.1.9 2 2 2h4M18 15V9',
+    Shield: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
+  };
+  const path = icons[name] || icons['X'];
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      className={className} style={style}>
+      {path.split('M').filter(Boolean).map((d, i) => (
+        <path key={i} d={'M' + d} />
+      ))}
+    </svg>
+  );
+};
+
+// ─── NIST CONTROLS ────────────────────────────────────────────────────────────
+const nistControls = [
+  { id: "NIST AI RMF MAP-1",     label: "MAP-1: Context & Lineage",       category: "Identify", colors: { active: "bg-blue-100 border-blue-400 text-blue-900",   badge: "bg-blue-50 text-blue-800 border-blue-200"   } },
+  { id: "NIST AI RMF MAP-3",     label: "MAP-3: Capabilities & Bounds",   category: "Identify", colors: { active: "bg-teal-100 border-teal-400 text-teal-900",   badge: "bg-teal-50 text-teal-800 border-teal-200"   } },
+  { id: "NIST AI RMF MEASURE-1", label: "MEASURE-1: Attack Surface",      category: "Detect",   colors: { active: "bg-rose-100 border-rose-400 text-rose-900",   badge: "bg-rose-50 text-rose-800 border-rose-200"   } },
+  { id: "NIST AI RMF MEASURE-2", label: "MEASURE-2: Evaluate & Track",    category: "Detect",   colors: { active: "bg-emerald-100 border-emerald-400 text-emerald-900", badge: "bg-emerald-50 text-emerald-800 border-emerald-200" } },
+  { id: "NIST AI RMF MEASURE-3", label: "MEASURE-3: Drift & Monitoring",  category: "Detect",   colors: { active: "bg-cyan-100 border-cyan-400 text-cyan-900",   badge: "bg-cyan-50 text-cyan-800 border-cyan-200"   } },
+  { id: "NIST CSF DE.AE",        label: "DE.AE: Detection & Analysis",    category: "Detect",   colors: { active: "bg-fuchsia-100 border-fuchsia-400 text-fuchsia-900", badge: "bg-fuchsia-50 text-fuchsia-800 border-fuchsia-200" } },
+  { id: "NIST AI RMF GV-1",      label: "GV-1: Governance",               category: "Protect",  colors: { active: "bg-purple-100 border-purple-400 text-purple-900", badge: "bg-purple-50 text-purple-800 border-purple-200" } },
+  { id: "NIST AI RMF GOVERN-1",  label: "GOVERN-1: Accountability",       category: "Protect",  colors: { active: "bg-indigo-100 border-indigo-400 text-indigo-900", badge: "bg-indigo-50 text-indigo-800 border-indigo-200" } },
+  { id: "NIST AI RMF GOVERN-2",  label: "GOVERN-2: Third-Party Risk",     category: "Protect",  colors: { active: "bg-amber-100 border-amber-400 text-amber-900", badge: "bg-amber-50 text-amber-800 border-amber-200"  } },
+  { id: "NIST AI RMF GOVERN-3",  label: "GOVERN-3: Policy & Sovereignty", category: "Protect",  colors: { active: "bg-orange-100 border-orange-400 text-orange-900", badge: "bg-orange-50 text-orange-800 border-orange-200" } },
+  { id: "NIST CSF PR.AC",        label: "PR.AC: Identity & Access",       category: "Protect",  colors: { active: "bg-violet-100 border-violet-400 text-violet-900", badge: "bg-violet-50 text-violet-800 border-violet-200" } },
+  { id: "NIST CSF PR.DS",        label: "PR.DS: Data Security",           category: "Protect",  colors: { active: "bg-sky-100 border-sky-400 text-sky-900",     badge: "bg-sky-50 text-sky-800 border-sky-200"     } },
+  { id: "NIST AI RMF MANAGE-1",  label: "MANAGE-1: Risk Management",      category: "Respond",  colors: { active: "bg-pink-100 border-pink-400 text-pink-900",   badge: "bg-pink-50 text-pink-800 border-pink-200"   } },
+  { id: "NIST AI RMF MANAGE-2",  label: "MANAGE-2: Privacy Risk",         category: "Respond",  colors: { active: "bg-lime-100 border-lime-400 text-lime-900",   badge: "bg-lime-50 text-lime-800 border-lime-200"   } },
+  { id: "NIST AI RMF MANAGE-4",  label: "MANAGE-4: Vendor Monitoring",    category: "Respond",  colors: { active: "bg-slate-200 border-slate-500 text-slate-900", badge: "bg-slate-100 text-slate-800 border-slate-300" } },
+];
+
+// ─── ARCHITECTURE LAYERS (updated to match actual Backbase platform) ──────────
+const architectureLayers = [
+  {
+    id: "controlplane", title: "1. Control Plane & Ingress", iconName: "Globe",
+    description: "The entry point and operational command layer. Azure API Management (APIM) handles ingress with DNS, WAF, and SSL termination. Argo CD drives GitOps-based deployments while CI/CD pipelines enforce automated checks, builds, and releases. Grafana dashboards and PagerDuty alerts provide platform-wide monitoring.",
+    features: [
+      "Azure APIM — DNS, WAF, SSL Termination",
+      "GitOps Deployments via Argo CD",
+      "Automated CI/CD Pipelines (PR checks, builds, releases)",
+      "Self-Service Repository Provisioning",
+      "Grafana Dashboards & PagerDuty Alerting",
+      "Human-in-the-Loop (HITL) Escalation Workflows",
+      "Real-Time Evaluation & Incident Management"
+    ],
+    techStack: [
+      { category: "Ingress & API Management", tools: ["Azure APIM", "WAF", "SSL/TLS Termination"] },
+      { category: "GitOps & CI/CD", tools: ["Argo CD", "Helm Charts", "GitHub Actions"] },
+      { category: "Monitoring & Alerting", tools: ["Grafana", "PagerDuty", "OpenTelemetry"] }
+    ],
+    compliance: [
+      { framework: "NIST AI RMF GOVERN-1", detail: "Accountability: HITL escalation workflows and unified Grafana dashboards track agent actions and ensure organizational transparency." },
+      { framework: "NIST AI RMF MAP-1",    detail: "Context Mapping: CI/CD pipeline metadata and repository provisioning establish agent purpose, lineage, and deployment context." },
+      { framework: "NIST AI RMF MEASURE-1", detail: "Attack Surface: WAF and APIM policies enforce perimeter controls; automated PR checks inject security validation into every deployment." }
+    ]
+  },
+  {
+    id: "aigateway", title: "2. AI Gateway", iconName: "Shield",
+    description: "The unified, provider-independent entry point for all LLM interactions. Azure APIM serves as the AI Gateway, enforcing guardrails, rate limiting, cost management, content safety, and PII protection. Multi-provider routing supports Azure AI Foundry, OpenAI, Gemini, Anthropic, and BYO models. Semantic caching and AI-driven load balancing optimize latency and cost.",
+    features: [
+      "Multi-Provider Routing (Azure AI Foundry, OpenAI, Gemini, Anthropic, BYO)",
+      "PII Detection & Automatic Sanitization",
+      "Content Safety & Jailbreak Prevention",
+      "Prompt Guard & Compliance Filtering",
+      "Semantic Caching — Reduces Latency & Cost",
+      "AI-Driven Load Balancing & Model Routing",
+      "Rate Limiting — Per-Agent & Per-User",
+      "Cost Management & Budget Enforcement",
+      "Full Request/Response Audit Logging",
+      "BB AI SDK for Standardized Integration"
+    ],
+    techStack: [
+      { category: "Gateway", tools: ["Azure APIM", "BB AI SDK"] },
+      { category: "Model Providers", tools: ["Azure AI Foundry", "OpenAI", "Gemini", "Anthropic", "BYO Models"] },
+      { category: "Safety & Guardrails", tools: ["Nemo Guardrails", "Content Safety Filters", "Prompt Guard"] }
+    ],
+    compliance: [
+      { framework: "NIST CSF PR.DS",        detail: "Data Security: PII detection and automatic redaction applied at the gateway level before any data reaches external LLM providers." },
+      { framework: "NIST AI RMF GOVERN-3",  detail: "Policy & Sovereignty: Geo-routing and provider selection policies enforce data residency requirements; no data leaves approved jurisdictions." },
+      { framework: "NIST AI RMF MANAGE-1",  detail: "Risk Management: All LLM traffic is centralized through the gateway, enforcing data classification, rate limiting, and hard-stop budget controls." },
+      { framework: "NIST AI RMF GOVERN-2",  detail: "Third-Party Risk: Centralized provider management with unified DPA enforcement and explicit opt-out controls for training data usage." },
+      { framework: "NIST AI RMF MANAGE-4",  detail: "Vendor Monitoring: Real-time latency, error rates, and token costs tracked per provider; automatic failover on threshold breaches." },
+      { framework: "NIST AI RMF MANAGE-2",  detail: "Privacy Risk: Regex-based PII detection with automatic sanitization ensures compliant data handling across all model providers." }
+    ]
+  },
+  {
+    id: "agentruntime", title: "3. Agent Runtime", iconName: "BrainCircuit",
+    description: "The cognitive and execution core. FastAPI-based agent APIs run as Kubernetes workloads with 99.5–99.9% SLA. Agno and LangGraph orchestrate multi-step, multi-agent workflows. MCP integration exposes pre-built banking domain services (deposits, payments, loans, fraud). Real-time evaluations, behavioral guardrails, and OTel tracing are embedded at every step.",
+    features: [
+      "FastAPI Agent APIs with Background Workers",
+      "Agno & LangGraph Multi-Agent Orchestration",
+      "MCP Integration — Banking Domain Services",
+      "Banking MCPs: Deposits, Payments, Loans, Fraud",
+      "BIAN Coreless for Unified Banking APIs",
+      "Real-Time Evaluations on Every Trace",
+      "Behavioral Guardrails & Anomaly Detection",
+      "Prompt Validation & Pre-Execution Sanitization",
+      "RBAC — Role-Based Access to Models & Data",
+      "OpenTelemetry Distributed Tracing",
+      "Langfuse Run Tracking & Analysis"
+    ],
+    techStack: [
+      { category: "Orchestration Frameworks", tools: ["Agno", "LangGraph", "Google ADK", "LangChain"] },
+      { category: "Agent APIs", tools: ["FastAPI", "Python", "BB AI SDK"] },
+      { category: "Banking Integrations", tools: ["MCP Servers", "Grand Central", "BIAN Coreless"] },
+      { category: "Observability", tools: ["OpenTelemetry", "Langfuse", "Promptfoo"] }
+    ],
+    compliance: [
+      { framework: "NIST AI RMF MAP-3",     detail: "Capabilities & Bounds: Agent manifests define permitted MCP tool access, banking service scopes, and orchestration boundaries enforced at runtime." },
+      { framework: "NIST CSF PR.AC",        detail: "Identity & Access: RBAC controls govern agent access to models, data, and banking domain MCPs; least-privilege enforcement on every request." },
+      { framework: "NIST CSF DE.AE",        detail: "Detection & Analysis: Behavioral anomaly detection via Langfuse traces; real-time evaluations flag safety, PII, and jailbreak risks on every agent run." },
+      { framework: "NIST AI RMF MEASURE-2", detail: "Evaluate & Track: Automated Promptfoo evaluations baseline agent quality; Langfuse continuous monitoring detects performance and behavioral drift." },
+      { framework: "NIST AI RMF GOVERN-1",  detail: "Accountability: HITL escalation for high-risk agent actions; full OTel trace audit trail covering every decision in multi-step workflows." }
+    ]
+  },
+  {
+    id: "data", title: "4. Data", iconName: "Database",
+    description: "Persistent storage, caching, and event backbone. PostgreSQL with pgvector powers RAG and embedding workflows. Redis handles session state and fast term-based lookups. Azure Service Bus enables async event-driven architectures. Object Storage holds artifacts and models. Multi-layer caching — response, embedding, and semantic — reduces latency and cost.",
+    features: [
+      "PostgreSQL + pgvector — Embeddings & RAG",
+      "Redis — Session State & Fast Lookups",
+      "Azure Service Bus — Async & Event-Driven Workflows",
+      "Object Storage — Artifacts & Model Artifacts",
+      "Container & Package Registries (ACR/ECR/GCR)",
+      "Response Caching — Identical Query Deduplication",
+      "Embedding Caching — Vector Retrieval Optimization",
+      "Semantic Cache at AI Gateway Layer",
+      "Encrypted at Rest (AES-256) & in Transit (TLS 1.3)",
+      "Audit-Ready Interaction Logs"
+    ],
+    techStack: [
+      { category: "Vector & Relational", tools: ["PostgreSQL", "pgvector"] },
+      { category: "Caching & State", tools: ["Redis"] },
+      { category: "Messaging & Storage", tools: ["Azure Service Bus", "Azure Blob Storage"] },
+      { category: "Registries", tools: ["ACR / ECR / GCR", "GitHub Packages"] }
+    ],
+    compliance: [
+      { framework: "NIST CSF PR.DS",       detail: "Data Security: All vector stores and relational databases encrypted at rest (AES-256) and in transit (TLS 1.3); access governed by platform RBAC policies." },
+      { framework: "NIST AI RMF MANAGE-2", detail: "Privacy Risk: Session data scoped to authenticated agent context; Redis TTLs enforce automatic expiry; no cross-agent data bleed." },
+      { framework: "NIST AI RMF MAP-1",    detail: "Lineage: Embedding provenance tracked in pgvector metadata; object storage versioning maintains model artifact lineage for auditability." }
+    ]
+  },
+  {
+    id: "foundation", title: "5. Foundation (Infrastructure)", iconName: "Cpu",
+    description: "The infrastructure substrate underpinning the entire platform. Kubernetes provides container orchestration across any cloud provider with 99.9% SLA. Istio service mesh delivers traffic management, mTLS, and inter-service observability. Helm charts and Terraform codify all infrastructure; STRIDE-AI threat modeling and Secure SDLC practices are embedded in the deployment lifecycle.",
+    features: [
+      "Kubernetes — Multi-Cloud Container Orchestration (99.9% SLA)",
+      "Istio Service Mesh — mTLS, Traffic Policies & Observability",
+      "Docker — Containerization Standard",
+      "Helm Charts — Deployment Packaging & Config Management",
+      "Terraform — Infrastructure as Code",
+      "STRIDE-AI Threat Modeling in CI/CD",
+      "Dependency & Container Image Scanning",
+      "Agent Sandboxes for Pre-Production Testing",
+      "OWASP Top-10 LLM Checks in Secure SDLC",
+      "Multi-Cloud Portability (Azure, AWS, GCP)"
+    ],
+    techStack: [
+      { category: "Container Platform", tools: ["Kubernetes", "Docker", "Istio"] },
+      { category: "Infrastructure as Code", tools: ["Terraform", "Helm"] },
+      { category: "Security & Scanning", tools: ["STRIDE-AI", "OWASP LLM Top-10", "Container Scanners"] }
+    ],
+    compliance: [
+      { framework: "NIST AI RMF MEASURE-1", detail: "Attack Surface: STRIDE-AI threat modeling and OWASP LLM Top-10 checks run automatically in every CI/CD pipeline; container scans block vulnerable images." },
+      { framework: "NIST AI RMF MAP-1",     detail: "Lineage: Terraform state and Helm chart versions provide full infrastructure lineage; every deployment is traceable to a signed Git commit." },
+      { framework: "NIST CSF PR.AC",        detail: "Identity & Access: Istio mTLS enforces zero-trust service-to-service authentication; Kubernetes RBAC restricts workload permissions to least-privilege." }
+    ]
+  }
+];
+
+// ─── KEY CONTROLS DATA ────────────────────────────────────────────────────────
+const provisioningProcess = [
+  { id:1, title:"Intake & Classification", layer:"Layer 1: Control Plane (MAP-1)", iconName:"FileText", color:COLORS.darkBlue, bg:"bg-blue-50", border:"border-blue-200",
+    description:"The business sponsor uses the self-service portal to define the agent's exact purpose, data classification tier (e.g., Confidential, PII), and required geographic residency. CI/CD pipeline provisions the agent repository with appropriate RBAC, Helm chart templates, and Argo CD application manifests.",
+    codeSnippet:'{\n  "agent_id": "credit_analyst_v1",\n  "data_tier": "PII",\n  "residency": "EU-only",\n  "mcp_scopes": ["loans", "party-lifecycle"]\n}' },
+  { id:2, title:"STRIDE-AI Threat Modeling & CI/CD Validation", layer:"Layer 5: Foundation (MEASURE-1)", iconName:"GitBranch", color:COLORS.lightBlue, bg:"bg-cyan-50", border:"border-cyan-200",
+    description:"During deployment, the automated CI/CD pipeline runs a STRIDE-AI threat model and OWASP LLM Top-10 checks, verifying that the new agent is resistant to prompt injections, jailbreaks, and denial-of-service attacks. Container image scans block vulnerable dependencies before they reach production.",
+    codeSnippet:null },
+  { id:3, title:"RBAC, MCP Scoping & Agent Registration", layer:"Layer 3: Agent Runtime (PR.AC, MAP-3)", iconName:"Fingerprint", color:"#8b5cf6", bg:"bg-purple-50", border:"border-purple-200",
+    description:"The agent's approved capabilities are compiled into an Agent Manifest: permitted MCP servers, model provider, budget cap, and RBAC roles. This manifest is registered in the platform, assigning a strict machine identity and least-privilege tokens scoped to the declared banking domain services.",
+    codeSnippet:'{\n  "model": "azure-ai-foundry/gpt-4o",\n  "mcp_servers": ["loans", "party-lifecycle"],\n  "daily_budget_usd": 80,\n  "rbac_role": "credit-analyst-readonly"\n}' }
+];
+
+const runtimeEnforcementProcess = [
+  { id:1, title:"APIM Ingress, WAF & PII Sanitization", layer:"Layer 1: Control Plane + Layer 2: AI Gateway (PR.DS, GOVERN-3)", iconName:"Filter", color:"#0891b2", bg:"bg-cyan-50", border:"border-cyan-200",
+    description:"When a user submits a prompt, it passes through Azure APIM (WAF + SSL termination). The AI Gateway applies real-time PII detection and automatic redaction. Geo-routing policies block requests targeting providers outside the permitted legal jurisdiction.",
+    codeSnippet:'{\n  "action": "redact",\n  "pattern": "NRIC|SSN|IBAN",\n  "geo_block": "non-EU-providers"\n}' },
+  { id:2, title:"Token Quotas & FinOps Hard-Stop", layer:"Layer 2: AI Gateway (MANAGE-4)", iconName:"Wallet", color:"#059669", bg:"bg-emerald-50", border:"border-emerald-200",
+    description:"The AI Gateway evaluates real-time token consumption against the agent's budget manifest. If the daily budget cap is reached, the request is hard-stopped to prevent financial overruns — enforced before any call reaches the LLM provider.",
+    codeSnippet:'{\n  "agent_id": "finance_bot_v2",\n  "daily_budget_usd": 50.00,\n  "current_spend": 50.05,\n  "action": "hard_stop_rate_limit"\n}' },
+  { id:3, title:"Behavioral Guardrails & Jailbreak Detection", layer:"Layer 3: Agent Runtime (DE.AE)", iconName:"ShieldBan", color:"#e11d48", bg:"bg-rose-50", border:"border-rose-200",
+    description:"Before reaching the LLM, the sanitized prompt passes through Nemo Guardrails and real-time evaluations. The behavioral anomaly engine analyzes for jailbreak attempts, prompt injection, tone deviations, and policy violations against the agent's established baseline.",
+    codeSnippet:null },
+  { id:4, title:"Orchestration, MCP Tool Execution & HITL Escalation", layer:"Layer 3: Agent Runtime (GOVERN-1)", iconName:"Users", color:COLORS.orange, bg:"bg-orange-50", border:"border-orange-200",
+    description:"Agno / LangGraph orchestrates multi-step workflows, calling permitted MCP banking servers (e.g., loans, payments). If any action is flagged as 'High Risk', the orchestrator pauses execution and routes the context to a HITL dashboard for explicit human approval before proceeding.",
+    codeSnippet:'{\n  "status": "paused",\n  "reason": "high_risk_loan_approval",\n  "mcp_server": "loans",\n  "required_approver": "credit_manager"\n}' }
+];
+
+const monitoringProcess = [
+  { id:1, title:"Cross-Model Consistency & Drift Detection", layer:"Layer 3: Agent Runtime (MEASURE-3)", iconName:"GitCompare", color:"#6366f1", bg:"bg-indigo-50", border:"border-indigo-200",
+    description:"To detect silent degradation in external provider models, the orchestrator periodically routes identical prompts to both the primary provider and an alternate (e.g., proprietary BYO model). Discrepancies beyond threshold trigger drift alerts via Langfuse and PagerDuty.",
+    codeSnippet:null },
+  { id:2, title:"Provider Telemetry & Cost Attribution", layer:"Layer 2: AI Gateway (MANAGE-4)", iconName:"BarChart3", color:COLORS.darkBlue, bg:"bg-blue-50", border:"border-blue-200",
+    description:"OpenTelemetry traces and Langfuse runs aggregate API latency, error rates (HTTP 429s), and token costs across all providers in real-time. Costs are attributed per agent and per team, surfacing FinOps visibility to the Cost Center dashboard.",
+    codeSnippet:'{\n  "provider": "azure-ai-foundry/gpt-4o",\n  "latency_ms": 420,\n  "token_cost": 0.0028,\n  "agent_id": "finance_bot_v2"\n}' },
+  { id:3, title:"AI Gateway Failover & Provider Agility", layer:"Layer 2: AI Gateway (GOVERN-2)", iconName:"ArrowRightLeft", color:"#059669", bg:"bg-emerald-50", border:"border-emerald-200",
+    description:"If a provider's latency spikes or error rates exceed thresholds, the AI Gateway automatically fails over to an alternative provider without any agent code changes. Model routing strategies can be updated centrally via APIM policies — no redeployment required.",
+    codeSnippet:'{\n  "primary": "azure-ai-foundry/gpt-4o",\n  "fallback": "anthropic/claude-opus",\n  "trigger": "latency_p99 > 2000ms"\n}' }
+];
+
+// ─── AGENT CATALOG ────────────────────────────────────────────────────────────
+const agentsCatalog = [
+  { id:"ba-agent",      name:"Business Analyst (BA) Agent",     intent:"Requirements gathering & PRD generation",    riskTier:"Medium", model:"Azure AI Foundry / GPT-4o", status:"Planned Roadmap", iconName:"FileText",
+    businessDesign:[
+      { category:"User Interaction",     iconName:"MessageSquare", color:"text-blue-600 bg-blue-50 border-blue-100",     items:["Conversational MS Teams Chatbot","Interactive Confluence Plugin"] },
+      { category:"Core Capabilities",    iconName:"Zap",           color:"text-amber-600 bg-amber-50 border-amber-100",   items:["Drafts Product Requirement Docs (PRDs)","Coordinates peer-review sub-agents","Summarises stakeholder meetings"] },
+      { category:"Banking Data (MCP)",   iconName:"Database",      color:"text-indigo-600 bg-indigo-50 border-indigo-100",items:["Historical PRD & ADR knowledge base","Internal market research via Grand Central"] },
+      { category:"Safety & Guardrails",  iconName:"ShieldCheck",   color:"text-emerald-600 bg-emerald-50 border-emerald-100",items:["RBAC scoped to Product Managers only","Baseline PII detection & DLP at AI Gateway"] }
+    ]
+  },
+  { id:"sa-agent",      name:"Solution Architect (SA) Agent",   intent:"System design & topology generation",        riskTier:"High",   model:"BYO Model / Private VPC",   status:"Planned Roadmap", iconName:"Network",
+    businessDesign:[
+      { category:"User Interaction",     iconName:"MessageSquare", color:"text-blue-600 bg-blue-50 border-blue-100",     items:["Interactive Design Canvas","Internal Developer Portal (Backstage)"] },
+      { category:"Core Capabilities",    iconName:"Zap",           color:"text-amber-600 bg-amber-50 border-amber-100",   items:["Generates cloud system topologies","Validates design against security policies","Outputs Infrastructure-as-Code (Terraform/Helm)"] },
+      { category:"Banking Data (MCP)",   iconName:"Database",      color:"text-indigo-600 bg-indigo-50 border-indigo-100",items:["Corporate Architecture Decision Records (ADRs)","Approved vendor & tech stack lists"] },
+      { category:"Safety & Guardrails",  iconName:"ShieldCheck",   color:"text-emerald-600 bg-emerald-50 border-emerald-100",items:["Air-gapped BYO model execution","High-sensitivity IP redaction filters","STRIDE-AI threat check on every topology output"] }
+    ]
+  },
+  { id:"doc-agent",     name:"Document Classification Agent",   intent:"Retail Customer Onboarding Workflow",        riskTier:"Low",    model:"Azure AI Foundry / Gemini", status:"In Development",  iconName:"FileJson",
+    businessDesign:[
+      { category:"Onboarding Workflow",  iconName:"UserPlus",      color:"text-blue-600 bg-blue-50 border-blue-100",     items:["Customer uploads ID & Proof of Address via mobile","OCR extracts PII for automated form pre-fill","Cross-checks authenticity with govt. databases"] },
+      { category:"Core Capabilities",    iconName:"Zap",           color:"text-amber-600 bg-amber-50 border-amber-100",   items:["Extracts text & vision from scanned PDFs/photos","Classifies document type (Passport, Utility, etc.)","Routes verified data to KYC/AML systems via Party Lifecycle MCP"] },
+      { category:"Banking Data (MCP)",   iconName:"Database",      color:"text-indigo-600 bg-indigo-50 border-indigo-100",items:["Party Lifecycle MCP — onboarding & verification","Fraud MCP — identity theft pattern matching"] },
+      { category:"Safety & Guardrails",  iconName:"ShieldCheck",   color:"text-emerald-600 bg-emerald-50 border-emerald-100",items:["End-to-end encryption (AES-256 at rest, TLS 1.3 in transit)","Automated PII masking at AI Gateway","SOC2-compliant audit trails for all uploads","Secure document shredding after verification"] }
+    ]
+  },
+  { id:"credit-agent",  name:"Credit Analyst Agent",            intent:"Risk scoring & loan approval prep",          riskTier:"High",   model:"BYO Model / Private VPC",   status:"In Development",  iconName:"Landmark",
+    businessDesign:[
+      { category:"User Interaction",     iconName:"MessageSquare", color:"text-blue-600 bg-blue-50 border-blue-100",     items:["Loan Officer Action Dashboard","Requires explicit human sign-off (HITL) for all decisions"] },
+      { category:"Core Capabilities",    iconName:"Zap",           color:"text-amber-600 bg-amber-50 border-amber-100",   items:["Fetches applicant financial history via Loans MCP","Calculates initial risk scores","Prepares policy review summaries for loan officers"] },
+      { category:"Banking Data (MCP)",   iconName:"Database",      color:"text-indigo-600 bg-indigo-50 border-indigo-100",items:["Loans MCP — seamless lending data access","Party Reference Data MCP — verified customer records","Party Access Entitlement MCP — credit access control"] },
+      { category:"Safety & Guardrails",  iconName:"ShieldCheck",   color:"text-emerald-600 bg-emerald-50 border-emerald-100",items:["Strict PII/NRIC/IBAN masking at gateway","Behavioral anomaly tracking via Langfuse","HITL mandatory; no autonomous loan approvals","Mandatory Data Processing Agreements (DPAs)"] }
+    ]
+  },
+  { id:"support-agent", name:"Customer Support Agent",          intent:"Level 1 ticket resolution",                  riskTier:"Medium", model:"Azure AI Foundry / GPT-4o", status:"Production",      iconName:"Users",
+    businessDesign:[
+      { category:"User Interaction",     iconName:"MessageSquare", color:"text-blue-600 bg-blue-50 border-blue-100",     items:["Zendesk Agent Workspace","Intercom customer-facing web widget"] },
+      { category:"Core Capabilities",    iconName:"Zap",           color:"text-amber-600 bg-amber-50 border-amber-100",   items:["Resolves L1 troubleshooting tickets","Executes authorized actions (e.g., password reset) via Device MCP"] },
+      { category:"Banking Data (MCP)",   iconName:"Database",      color:"text-indigo-600 bg-indigo-50 border-indigo-100",items:["Device MCP — card & device lifecycle","Transactions MCP — account query support","Official Help Center knowledge base (RAG)"] },
+      { category:"Safety & Guardrails",  iconName:"ShieldCheck",   color:"text-emerald-600 bg-emerald-50 border-emerald-100",items:["Customer PII redaction before LLM provider","Real-time tone & brand voice drift monitoring","Nemo Guardrails on every response"] }
+    ]
+  },
+  { id:"finance-agent", name:"Finance Bot v2",                  intent:"Quarterly forecasting",                      riskTier:"High",   model:"Azure AI Foundry / GPT-4o", status:"Production",      iconName:"DollarSign",
+    businessDesign:[
+      { category:"User Interaction",     iconName:"MessageSquare", color:"text-blue-600 bg-blue-50 border-blue-100",     items:["Secure Enterprise Chat Portal","Requires Executive SSO Authentication via APIM"] },
+      { category:"Core Capabilities",    iconName:"Zap",           color:"text-amber-600 bg-amber-50 border-amber-100",   items:["Generates quarterly financial forecasts","Writes and executes Python data analysis scripts in sandboxed agent workload"] },
+      { category:"Banking Data (MCP)",   iconName:"Database",      color:"text-indigo-600 bg-indigo-50 border-indigo-100",items:["Isolated Redis session memory only","Strict policy against persistent logging of financial data"] },
+      { category:"Safety & Guardrails",  iconName:"ShieldCheck",   color:"text-emerald-600 bg-emerald-50 border-emerald-100",items:["EU geo-fencing enforced at AI Gateway","Hard-stop daily token cost enforcement ($50/day)","Promptfoo evals on every forecast output"] }
+    ]
+  },
+  { id:"chargeback-agent", name:"Chargeback Classification Agent", intent:"Classify card dispute reason codes & confirm before scheme submission", riskTier:"High", model:"Azure AI Foundry / GPT-4o", status:"In Development", iconName:"ArrowRightLeft",
+    businessDesign:[
+      { category:"User Interaction",     iconName:"MessageSquare", color:"text-blue-600 bg-blue-50 border-blue-100",     items:["Digital Assist (DA) — Chargeback Ops workspace for viewing & confirming classifications","BDO apps (Online/Pay) — cardholder-facing dispute submission & status notifications"] },
+      { category:"Core Capabilities",    iconName:"Zap",           color:"text-amber-600 bg-amber-50 border-amber-100",   items:["Retrieve full merchant & transaction data from CMS (Vertexon)","Classify reason code against Visa (10.x–13.x) & Mastercard ADC scheme rules","Present classification with confidence score to Chargeback Op in DA","100% HITL — Chargeback Op confirms reason in DA before scheme submission","Raise confirmed chargeback with Brand platform (Visa / Mastercard)","Monitor chargeback status & notify DA and BDO apps"] },
+      { category:"Banking Data (MCP)",   iconName:"Database",      color:"text-indigo-600 bg-indigo-50 border-indigo-100",items:["Transactions MCP — full dispute & transaction history","Fraud MCP — behavioral & first-party fraud pattern matching","Payments Initiation MCP — chargeback case creation with Brand platform","Party Reference Data MCP — cardholder & merchant verification"] },
+      { category:"Safety & Guardrails",  iconName:"ShieldCheck",   color:"text-emerald-600 bg-emerald-50 border-emerald-100",items:["PAN / CVV / auth code masking at AI Gateway (PCI DSS scope)","100% HITL mandatory — no chargeback raised without Chargeback Op confirmation","Visa & Mastercard scheme rules encoded in Nemo Guardrails","Full audit trail per classification decision (regulatory & scheme requirement)","First-party fraud flag triggers Fraud MCP escalation before HITL step"] }
+    ]
+  },
+];
+
+// ─── TRUST CENTER DATA ────────────────────────────────────────────────────────
+const recentIncidents = [
+  { id:"INC-092", time:"11:08 AM", type:"PCI Guardrail",      agent:"chargeback_agent", detail:"Raw PAN detected in Vertexon API response. Automatically masked at AI Gateway before reaching GPT-4o. Classification proceeded with tokenised reference only.", color:"bg-red-100 text-red-800 border-red-300" },
+  { id:"INC-089", time:"10:42 AM", type:"PII Redaction",      agent:"finance_bot_v2",   detail:"IBAN pattern detected in prompt and successfully masked at AI Gateway before routing to Azure AI Foundry.", color:"bg-amber-100 text-amber-800 border-amber-200" },
+  { id:"INC-090", time:"09:15 AM", type:"Behavioral Drift",   agent:"customer_support", detail:"Tone variance exceeded 15% threshold against Langfuse baseline. Flagged for review via PagerDuty.",          color:"bg-rose-100 text-rose-800 border-rose-200" },
+  { id:"INC-091", time:"08:30 AM", type:"Geo-Fence Block",    agent:"finance_bot_v2",   detail:"Attempted routing to non-EU provider blocked by APIM policy. Fallback to approved Azure EU region applied.", color:"bg-red-100 text-red-800 border-red-300" },
+];
+
+const agentExecutions = [
+  { id:"TX-9945", agent:"chargeback_agent", intent:"Dispute Classification",    model:"Azure AI Foundry", status:"HITL Required", statusColor:"text-amber-600 bg-amber-50",   duration:"2.3s" },
+  { id:"TX-9944", agent:"chargeback_agent", intent:"Visa 13.1 Classification",  model:"Azure AI Foundry", status:"Approved",      statusColor:"text-emerald-600 bg-emerald-50", duration:"1.8s" },
+  { id:"TX-9943", agent:"chargeback_agent", intent:"Fraud Pattern Detection",   model:"Azure AI Foundry", status:"Blocked (PCI)", statusColor:"text-rose-600 bg-rose-50",     duration:"0.6s" },
+  { id:"TX-9942", agent:"customer_support", intent:"Refund Processing",          model:"Azure AI Foundry", status:"Approved",      statusColor:"text-emerald-600 bg-emerald-50", duration:"1.2s" },
+  { id:"TX-9941", agent:"finance_bot_v2",   intent:"Quarterly Forecast",         model:"Azure AI Foundry", status:"HITL Required", statusColor:"text-amber-600 bg-amber-50",   duration:"3.4s" },
+  { id:"TX-9940", agent:"customer_support", intent:"Password Reset Help",         model:"Azure AI Foundry", status:"Blocked (PII)", statusColor:"text-rose-600 bg-rose-50",     duration:"0.8s" },
+];
+
+// ─── COST CENTER DATA ─────────────────────────────────────────────────────────
+const costByProvider = [
+  { provider:"Azure AI Foundry (GPT-4o)",  spend:"$4,250", tokens:"42.5M", percentage:55, color:"bg-blue-500" },
+  { provider:"Azure AI Foundry (Gemini)",  spend:"$2,100", tokens:"28.0M", percentage:27, color:"bg-teal-500" },
+  { provider:"BYO Model (Private VPC)",    spend:"$850",   tokens:"85.0M", percentage:11, color:"bg-indigo-500" },
+  { provider:"Anthropic (via AI Gateway)", spend:"$540",   tokens:"3.6M",  percentage:7,  color:"bg-orange-500" },
+];
+
+const costByAgent = [
+  { agent:"finance_bot_v2",      spend:"$3,120", primaryModel:"Azure AI Foundry / GPT-4o", trend:"up",   trendValue:"+12%" },
+  { agent:"chargeback_agent",    spend:"$2,340", primaryModel:"Azure AI Foundry / GPT-4o", trend:"up",   trendValue:"+38%", note:"High volume — ~1,200 disputes/mo" },
+  { agent:"customer_support",    spend:"$1,840", primaryModel:"Azure AI Foundry / GPT-4o", trend:"down", trendValue:"-5%"  },
+  { agent:"code_copilot",        spend:"$1,450", primaryModel:"Anthropic / Claude Opus",   trend:"up",   trendValue:"+22%" },
+  { agent:"hr_assistant_v1",     spend:"$890",   primaryModel:"AI Foundry / Gemini",       trend:"up",   trendValue:"+2%"  },
+  { agent:"data_analyst",        spend:"$440",   primaryModel:"AI Foundry / GPT-3.5",      trend:"down", trendValue:"-1%"  },
+];
+
+// ─── COMPLIANCE INHERITANCE DATA ─────────────────────────────────────────────
+const platformControls = [
+  { name:'OWASP LLM Top-10',  desc:'Prompt injection, jailbreak & supply-chain mitigations built into AI Gateway + Nemo Guardrails.' },
+  { name:'ISO 27001',          desc:'Infrastructure security — Kubernetes RBAC, Istio mTLS, Helm IaC, container image scanning.' },
+  { name:'NIST CSF PR.DS',     desc:'Data security — TLS 1.3 in transit, AES-256 at rest, PII sanitization at APIM.' },
+  { name:'NIST CSF PR.AC',     desc:'Identity & access — APIM auth, RBAC, Argo CD GitOps least-privilege enforcement.' },
+  { name:'SOC 2 Type II',      desc:'Operational controls — Grafana monitoring, PagerDuty alerting, full OTel audit trails.' },
+  { name:'NIST CSF DE.AE',     desc:'Anomaly detection — Langfuse behavioral baselines, real-time evaluations on every trace.' },
+];
+
+const complianceCountries = {
+  PH: {
+    flag:'🇵🇭', name:'Philippines', regulator:'BSP',
+    color:'#dc2626', bg:'#fef2f2', border:'#fecaca',
+    note:'Key regulators: Bangko Sentral ng Pilipinas (BSP) · National Privacy Commission (NPC) · Anti-Money Laundering Council (AMLC)',
+    regs: [
+      { name:'BSP Circ. 1105 (TRM)',  desc:'Technology Risk Management — AI systems must document risk assessment, model governance, and report incidents to BSP.', tag:'BSP Mandate' },
+      { name:'Data Privacy Act 2012', desc:'NPC-enforced. Consent, purpose limitation, and data subject rights apply to all personal data the agent processes.', tag:'NPC / DPA' },
+      { name:'BSP AI/ML Guidelines',  desc:'BSP expects explainability, fairness testing, and bias monitoring for AI used in credit or customer decisions.', tag:'BSP AI' },
+      { name:'AMLA (RA 9160)',         desc:'AMLC-supervised. Required for any agent handling onboarding, credit, or transaction workflows.', tag:'AMLC' },
+    ]
+  },
+  MY: {
+    flag:'🇲🇾', name:'Malaysia', regulator:'BNM',
+    color:'#0D74CE', bg:'#eff6ff', border:'#bfdbfe',
+    note:'Key regulators: Bank Negara Malaysia (BNM) · Securities Commission Malaysia (SC) · Personal Data Protection Department (JPDP)',
+    regs: [
+      { name:'BNM RMiT',             desc:'Risk Management in Technology — mandatory for licensed institutions. Covers AI model risk, audit trails, and third-party vendor controls.', tag:'BNM Mandate' },
+      { name:'PDPA 2010',            desc:'Personal Data Protection Act — governs collection, processing, and transfer of personal data. Extra-territorial reach for cloud deployments.', tag:'JPDP' },
+      { name:'BNM AIGE',             desc:'AI Governance & Ethics — requires bias assessments, explainability, and accountability structures for AI in financial services.', tag:'BNM AI' },
+      { name:'AML/CFT (AMLA 2001)', desc:'Anti-Money Laundering, Anti-Terrorism Financing & Proceeds of Unlawful Activities Act — required for credit and onboarding agents.', tag:'BNM AML' },
+    ]
+  },
+  ANZ: {
+    flag:'🇦🇺', name:'Australia / NZ', regulator:'APRA / RBNZ',
+    color:'#059669', bg:'#f0fdf4', border:'#86efac',
+    note:'Key regulators: APRA (AU) · ASIC (AU) · RBNZ (NZ) · OAIC — Office of the Australian Information Commissioner · NZ Privacy Commissioner',
+    regs: [
+      { name:'APRA CPS 234',           desc:'Information Security standard — mandatory for APRA-regulated entities. Covers AI system security, LLM provider third-party risk, and incident response.', tag:'APRA Mandate' },
+      { name:'Privacy Act 1988 (APPs)',desc:'Australian Privacy Principles govern personal information handling. NZ Privacy Act 2020 applies for NZ-scoped deployments.', tag:'OAIC / NZ OPC' },
+      { name:'AI Ethics Framework',    desc:'DISR voluntary framework covering fairness, transparency, and contestability. ASIC increasingly references it in enforcement guidance.', tag:'ASIC / DISR' },
+      { name:'CDR / Open Banking',     desc:'Consumer Data Right — agents accessing CDR data must comply with accreditation, consent, and security obligations under CDR Rules.', tag:'ACCC / CDR' },
+    ]
+  },
+  VN: {
+    flag:'🇻🇳', name:'Vietnam', regulator:'SBV',
+    color:'#d97706', bg:'#fffbeb', border:'#fde68a',
+    note:'Key regulators: State Bank of Vietnam (SBV) · Ministry of Public Security (MPS) · Ministry of Information & Communications (MIC)',
+    regs: [
+      { name:'SBV Circular 09/2020',  desc:'IT Security in Banking — requires risk classification, security controls, and audit logging for all AI/digital systems in SBV-licensed institutions.', tag:'SBV Mandate' },
+      { name:'PDPD (Decree 13/2023)', desc:"Vietnam's first comprehensive data privacy law. Consent, data subject rights, and Data Processing Agreement obligations apply.", tag:'MPS / PDPD' },
+      { name:'Cybersecurity Law 2018',desc:'Data localisation requirements for certain categories. AI systems processing Vietnamese user data may require local storage compliance.', tag:'MIC / CSL' },
+      { name:'SBV AI Guidelines',     desc:'SBV is actively developing AI-specific guidance for credit, fraud, and customer service use cases. Follow-the-risk approach currently applied.', tag:'SBV AI (Draft)' },
+    ]
+  },
+};
+
+const complianceAgents = [
+  { id:'chargeback', label:'Chargeback Classification', risk:'High', defaultCountry:'PH',
+    base:[
+      { name:'NIST AI RMF (Full)',    desc:'MAP-1 purpose declaration mandatory. 100% HITL — Chargeback Op confirms every classification in DA before scheme submission. GOVERN-1 full accountability.', state:'active',  trigger:'Risk: High' },
+      { name:'PCI DSS',               desc:'First agent with full PCI scope. Processes PAN, auth codes & merchant transaction data from CMS (Vertexon). PAN masking enforced at AI Gateway before GPT-4o.', state:'active',  trigger:'Card Data in Scope' },
+      { name:'Payment Scheme Rules',  desc:'Visa Dispute Resolution Rules (10.x–13.x) & Mastercard ADC reason codes encoded in Nemo Guardrails. Contractual obligation to card networks — not a regulatory standard.', state:'active',  trigger:'Visa / Mastercard' },
+      { name:'SR 11-7 Model Risk',    desc:'Classification model drives financial dispute decisions. Full independent validation, bias testing, and documented methodology required.', state:'active',  trigger:'Risk: High' },
+      { name:'AML / CFT',             desc:'Chargeback patterns can surface money-mule and first-party fraud signals. Fraud MCP integration puts this in partial AML/CFT scope.', state:'warn',    trigger:'Fraud Detection' },
+      { name:'Privacy Regulation',    desc:'Processes cardholder PII and transaction history. Jurisdiction-specific privacy law replaces this placeholder.', state:'country', trigger:'Jurisdiction ↓' },
+      { name:'Prudential AI Rules',   desc:'Jurisdiction-specific AI/model risk rules from the banking regulator replace this placeholder.', state:'country', trigger:'Jurisdiction ↓' },
+    ],
+    note:'Agent owner must declare: CMS (Vertexon) integration scope, Brand platform API credentials, PCI DSS tokenisation approach, HITL approver role (Chargeback Op), and Visa/MC scheme compliance certification.'
+  },
+  { id:'credit', label:'Credit Analyst', risk:'High', defaultCountry:'MY',
+    base:[
+      { name:'NIST AI RMF (Full)',    desc:'MAP-1 purpose declaration mandatory. Full GOVERN-1 HITL required for all loan decisions above threshold.', state:'active',  trigger:'Risk: High' },
+      { name:'SR 11-7 Model Risk',    desc:'Independent model validation, documented risk rating methodology, and board-level approval required.', state:'active',  trigger:'Risk: High' },
+      { name:'AML / CFT',             desc:'Credit decisions require full audit trail. Agent accesses Party Lifecycle + Loans MCP — in AML/CFT scope.', state:'active',  trigger:'Lending Domain' },
+      { name:'Privacy Regulation',    desc:'Processes applicant PII and financial history. Jurisdiction-specific privacy law replaces this placeholder.', state:'country', trigger:'Jurisdiction ↓' },
+      { name:'Prudential AI Rules',   desc:'Jurisdiction-specific AI/model risk rules from the banking regulator replace this placeholder.', state:'country', trigger:'Jurisdiction ↓' },
+      { name:'PCI DSS',               desc:'Does not directly handle card data. Platform network isolation covers perimeter. Not in direct scope.', state:'na',      trigger:'Not Applicable' },
+    ],
+    note:'Agent owner must declare: data tier, residency zone, MCP scopes (loans, party-lifecycle), HITL approver role, daily budget cap, and SR 11-7 model validation schedule.'
+  },
+  { id:'doc', label:'Doc Classification', risk:'Low', defaultCountry:'PH',
+    base:[
+      { name:'NIST AI RMF (Partial)', desc:'MAP-1 context declared. HITL not mandatory for low-risk automated classification. Periodic accuracy audits required.', state:'warn',    trigger:'Risk: Low' },
+      { name:'Privacy / Biometric',   desc:'OCR processes identity documents. Jurisdiction-specific rules on biometric and identity data handling replace this placeholder.', state:'country', trigger:'Jurisdiction ↓' },
+      { name:'AML / KYC',             desc:'Routes verified identity to KYC/AML systems via Party Lifecycle + Fraud MCP. Squarely in AML/CFT scope.', state:'active',  trigger:'Onboarding Domain' },
+      { name:'e-KYC Regulation',      desc:'Electronic identity verification rules vary by country. Jurisdiction-specific e-KYC standard replaces this placeholder.', state:'country', trigger:'Jurisdiction ↓' },
+      { name:'PCI DSS',               desc:'No card data in scope. Not applicable.', state:'na',      trigger:'Not Applicable' },
+      { name:'SR 11-7 Model Risk',    desc:'Low-risk classification model. Lighter validation — accuracy benchmarks and periodic bias testing sufficient.', state:'warn',    trigger:'Risk: Low' },
+    ],
+    note:'Agent owner must declare: document types in scope, biometric data handling policy, KYC integration endpoints, data retention limits, and jurisdiction e-KYC compliance approach.'
+  },
+  { id:'support', label:'Customer Support', risk:'Medium', defaultCountry:'ANZ',
+    base:[
+      { name:'NIST AI RMF (Partial)', desc:'MAP-1 declared for L1 support scope. HITL escalation for edge cases only. Tone and brand drift monitoring required.', state:'warn',    trigger:'Risk: Medium' },
+      { name:'Privacy / PII',         desc:'Handles customer PII in support context. PII redaction at AI Gateway enforced. Jurisdiction privacy law replaces this placeholder.', state:'country', trigger:'Jurisdiction ↓' },
+      { name:'Consumer Protection',   desc:'Customer-facing agent subject to jurisdiction-specific financial consumer protection regulations — replaces this placeholder.', state:'country', trigger:'Jurisdiction ↓' },
+      { name:'AML / CFT',             desc:'L1 support does not initiate or approve financial transactions. Not directly in scope.', state:'na',      trigger:'Not Applicable' },
+      { name:'PCI DSS',               desc:'No card numbers or payment auth in scope. Platform network isolation sufficient.', state:'na',      trigger:'Not Applicable' },
+      { name:'SR 11-7 Model Risk',    desc:'Customer-facing LLM — light model risk. Tone, accuracy, and brand voice monitoring via Langfuse.', state:'warn',    trigger:'Customer-Facing' },
+    ],
+    note:'Agent owner must declare: permitted action scope (Zendesk/DA), PII categories handled, brand voice baseline, escalation routing rules, and consumer protection obligations per jurisdiction.'
+  },
+  { id:'finance', label:'Finance Bot v2', risk:'High', defaultCountry:'ANZ',
+    base:[
+      { name:'NIST AI RMF (Full)',    desc:'Full MAP-1 declaration required. Executive-level HITL for forecast outputs above materiality threshold.', state:'active',  trigger:'Risk: High' },
+      { name:'SR 11-7 Model Risk',    desc:'Financial forecast model used in exec decisions. Full independent validation and documented audit trail required.', state:'active',  trigger:'Risk: High' },
+      { name:'Internal Data Policy',  desc:'Processes confidential internal financial data — not customer personal data. Internal data governance applies.', state:'warn',    trigger:'Confidential Data' },
+      { name:'Privacy Law',           desc:'Internal enterprise tool — does not process customer personal data. Not directly applicable.', state:'na',      trigger:'Not Applicable' },
+      { name:'AML / CFT',             desc:'Forecasting only — does not initiate or approve transactions. Not in direct scope.', state:'na',      trigger:'Not Applicable' },
+      { name:'PCI DSS',               desc:'Does not process cardholder data. Not in scope.', state:'na',      trigger:'Not Applicable' },
+    ],
+    note:'Agent owner must declare: data classification (Confidential), geo-fencing policy, daily budget cap, materiality threshold for HITL, and SR 11-7 model validation schedule.'
+  },
+];
+
+// ─── APP ──────────────────────────────────────────────────────────────────────
+function App() {
+  const [activeTab, setActiveTab] = useState('architecture');
+  const [selectedLayerId, setSelectedLayerId] = useState(null);
+  const [selectedAgentId, setSelectedAgentId] = useState(null);
+  const [expanded, setExpanded] = useState({ provisioning:false, runtime:false, monitoring:false });
+  const [selectedControl, setSelectedControl] = useState(null);
+  const [complianceAgentId, setComplianceAgentId] = useState('chargeback');
+  const [complianceCountry, setComplianceCountry] = useState('PH');
+
+  const toggleSection = k => setExpanded(p => ({ ...p, [k]: !p[k] }));
+
+  const handleControl = id => {
+    if (selectedControl === id) { setSelectedControl(null); return; }
+    setSelectedControl(id);
+    const match = architectureLayers.find(l => l.compliance.some(c => c.framework === id));
+    if (match) setSelectedLayerId(match.id);
+  };
+
+  const selectedLayer = architectureLayers.find(l => l.id === selectedLayerId);
+  const selectedAgent = agentsCatalog.find(a => a.id === selectedAgentId);
+
+  const tabs = [
+    { id:'architecture', label:'Architecture Layers', iconName:'Network' },
+    { id:'controls',     label:'Key Controls',        iconName:'ListChecks' },
+    { id:'factory',      label:'Agent Factory',       iconName:'Bot' },
+    { id:'dashboard',    label:'Trust Center',        iconName:'LayoutDashboard' },
+    { id:'cost',         label:'Cost Center',         iconName:'Wallet' },
+    { id:'compliance',   label:'Compliance',          iconName:'ShieldCheck' },
+  ];
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-4 text-gray-900">
+      <div className="max-w-7xl mx-auto mb-6">
+        <div className="flex items-center gap-3 mb-2">
+          <Icon name="Layers" size={32} style={{ color: COLORS.darkBlue }} />
+          <div>
+            <h1 className="text-2xl font-bold" style={{ color: COLORS.darkBlue }}>Regulated Agentic Platform Architecture</h1>
+            <span className="text-xs font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">v2 — Updated Platform Layers</span>
+          </div>
+        </div>
+        <p className="text-gray-600 text-xs mb-5 leading-relaxed mt-2">
+          A production-ready blueprint for banking AI agents where
+          <strong style={{color:COLORS.orange}}> Security-by-Design</strong>,
+          <strong style={{color:COLORS.darkBlue}}> Multi-Provider Observability</strong>, and
+          <strong style={{color:'#059669'}}> Banking Domain MCPs</strong> are integrated to meet regulatory standards.
+        </p>
+        {/* Nav Tabs */}
+        <div className="flex border-b border-gray-200 gap-6 overflow-x-auto no-scrollbar">
+          {tabs.map(t => (
+            <button key={t.id} onClick={() => setActiveTab(t.id)}
+              className={`pb-3 text-xs font-bold uppercase tracking-wide transition-colors relative whitespace-nowrap flex items-center gap-1.5 ${activeTab===t.id?'text-gray-900':'text-gray-500 hover:text-gray-700'}`}>
+              <Icon name={t.iconName} size={14}/> {t.label}
+              {activeTab===t.id && <span className="tab-active-bar"/>}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ─── ARCHITECTURE ──────────────────────────────────────────────────── */}
+      {activeTab === 'architecture' && (
+        <div className="max-w-7xl mx-auto anim-fade">
+          {/* NIST Controls Panel */}
+          <div className="mb-5 p-4 bg-white rounded-2xl shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                <Icon name="Scale" size={14} className="text-slate-500"/> Applicable NIST AI RMF Controls
+              </h3>
+              {selectedControl && (
+                <button onClick={()=>setSelectedControl(null)} className="text-xs font-bold text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-md">
+                  Reset
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {["Identify","Protect","Detect","Respond"].map(cat => (
+                <div key={cat} className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                  <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{cat}</h4>
+                  <div className="flex flex-col gap-1.5">
+                    {nistControls.filter(c=>c.category===cat).map(ctrl => (
+                      <button key={ctrl.id} onClick={()=>handleControl(ctrl.id)}
+                        className={`px-2 py-1.5 rounded-lg text-xs font-bold transition-all border text-left ${selectedControl===ctrl.id ? ctrl.colors.active+' ring-2 ring-opacity-50' : ctrl.colors.badge+' opacity-70'}`}>
+                        {ctrl.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className={`flex flex-col gap-3 ${selectedLayerId ? 'lg:col-span-6' : 'lg:col-span-12'}`}>
+              {architectureLayers.map(layer => {
+                const isSel = selectedLayerId === layer.id;
+                const isDim = selectedControl && !layer.compliance.some(c=>c.framework===selectedControl);
+                return (
+                  <div key={layer.id} onClick={()=>setSelectedLayerId(isSel?null:layer.id)}
+                    className={`p-4 rounded-xl border-2 cursor-pointer flex items-start gap-3 bg-white shadow-sm transition-all duration-300 ${isSel?'shadow-lg':'hover:shadow-md'} ${isDim?'opacity-25':''}`}
+                    style={{borderColor: isSel ? (layer.id==='agentruntime'?COLORS.orange:COLORS.darkBlue) : 'transparent'}}>
+                    <div className="p-2 rounded-lg flex-shrink-0 bg-gray-50" style={{color: isSel?COLORS.darkBlue:'#6b7280'}}>
+                      <Icon name={layer.iconName} size={26}/>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className={`font-bold text-base ${isSel?'text-gray-900':'text-gray-700'}`}>{layer.title}</h3>
+                      <p className="text-xs text-gray-500 mt-1 line-clamp-2">{layer.features.slice(0,5).join(' • ')}</p>
+                      {layer.compliance.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {layer.compliance.map((c,i) => {
+                            const ctrl = nistControls.find(n=>n.id===c.framework);
+                            return ctrl ? (
+                              <span key={i} className={`text-xs font-bold px-1.5 py-0.5 rounded border ${ctrl.colors.badge}`}>{ctrl.label}</span>
+                            ) : null;
+                          })}
+                        </div>
+                      )}
+                    </div>
+                    <Icon name="ChevronRight" size={18} className={`mt-1 flex-shrink-0 ${isSel?'text-blue-500':'text-gray-300'}`} style={{transform: isSel?'rotate(90deg)':''}}/>
+                  </div>
+                );
+              })}
+            </div>
+
+            {selectedLayer && (
+              <div className="lg:col-span-6 anim-slide-right">
+                <div className="sticky top-4 bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
+                  <button onClick={()=>setSelectedLayerId(null)} className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full">
+                    <Icon name="X" size={18}/>
+                  </button>
+                  <div className="flex items-center gap-3 mb-5 pb-5 border-b border-gray-100 pr-8">
+                    <div className="p-3 rounded-xl bg-blue-50 text-blue-600">
+                      <Icon name={selectedLayer.iconName} size={36}/>
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold">{selectedLayer.title.substring(3)}</h2>
+                      <p className="text-xs font-medium text-cyan-600 uppercase tracking-widest">Architectural Details</p>
+                    </div>
+                  </div>
+                  <div className="space-y-6 overflow-y-auto" style={{maxHeight:'70vh'}}>
+                    <p className="text-gray-600 text-sm leading-relaxed">{selectedLayer.description}</p>
+                    <div>
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3 flex items-center gap-2">
+                        <Icon name="Workflow" size={13}/> Key Capabilities
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {selectedLayer.features.map((f,i)=>(
+                          <div key={i} className="flex items-center gap-2 p-2.5 rounded-lg bg-gray-50 border border-gray-100 text-xs font-medium text-gray-700">
+                            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{backgroundColor:COLORS.lightBlue}}></span>
+                            {f}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3 flex items-center gap-2">
+                        <Icon name="Terminal" size={13}/> Technology Stack
+                      </h4>
+                      {selectedLayer.techStack.map((s,i)=>(
+                        <div key={i} className="mb-3">
+                          <div className="text-xs font-bold text-gray-400 mb-1">{s.category}</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {s.tools.map((t,j)=>(
+                              <span key={j} className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 shadow-sm">{t}</span>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {selectedLayer.compliance.length > 0 && (
+                      <div className="pt-4 border-t border-gray-100">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3 flex items-center gap-2">
+                          <Icon name="Landmark" size={13}/> Compliance Strategy
+                        </h4>
+                        <div className="space-y-2">
+                          {selectedLayer.compliance.map((comp,i)=>{
+                            const ctrl = nistControls.find(n=>n.id===comp.framework);
+                            const cls = (selectedControl===comp.framework && ctrl) ? ctrl.colors.active : (ctrl?ctrl.colors.badge:'bg-gray-50 border-gray-200 text-gray-800');
+                            return (
+                              <div key={i} className={`p-3 rounded-xl border text-xs transition-all ${cls}`}>
+                                <div className="font-bold mb-0.5">{ctrl?ctrl.label:comp.framework}</div>
+                                <div className="opacity-90 leading-snug">{comp.detail}</div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ─── KEY CONTROLS ──────────────────────────────────────────────────── */}
+      {activeTab === 'controls' && (
+        <div className="max-w-7xl mx-auto space-y-6 pb-12 anim-fade">
+          {[
+            { key:'provisioning', title:"Process 1: Secure Agent Provisioning",          sub:"Control Plane ➔ Foundation ➔ Agent Runtime",     iconName:"ListChecks", iconBg:"bg-indigo-100", iconColor:"text-indigo-700", steps:provisioningProcess,      desc:"A static architecture cannot secure dynamic AI. This process illustrates how a new AI agent safely transitions from a business request to a deployed, identity-bound entity with enforced operational limits — from APIM ingress through STRIDE-AI CI/CD validation to MCP-scoped runtime registration." },
+            { key:'runtime',      title:"Process 2: Runtime Guardrails & Data Security", sub:"Control Plane ➔ AI Gateway ➔ Agent Runtime",       iconName:"ShieldBan",  iconBg:"bg-rose-100",   iconColor:"text-rose-700",   steps:runtimeEnforcementProcess, desc:"This workflow enforces security at the speed of inference. As prompts enter the system through APIM, they are systematically filtered for PII, budget-checked, passed through Nemo Guardrails, and — if flagged as high-risk — paused for HITL approval before any MCP action executes." },
+            { key:'monitoring',   title:"Process 3: Vendor Agility & Drift Monitoring",  sub:"AI Gateway ➔ Agent Runtime ➔ Control Plane",       iconName:"Activity",   iconBg:"bg-cyan-100",   iconColor:"text-cyan-700",   steps:monitoringProcess,         desc:"To eliminate vendor lock-in and detect silent provider failures, the platform actively benchmarks external LLMs against internal baselines via Langfuse and leverages APIM routing policies to dynamically failover traffic — no code changes required." },
+          ].map(proc => (
+            <div key={proc.key} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+              <button onClick={()=>toggleSection(proc.key)} className="w-full text-left p-6 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className={`p-3 ${proc.iconBg} rounded-xl`}><Icon name={proc.iconName} size={26} className={proc.iconColor}/></div>
+                  <div>
+                    <h2 className="text-xl font-bold">{proc.title}</h2>
+                    <p className="text-gray-500 text-sm">{proc.sub}</p>
+                  </div>
+                </div>
+                <Icon name={expanded[proc.key]?'ChevronUp':'ChevronDown'} size={22} className="text-gray-400 flex-shrink-0"/>
+              </button>
+              {expanded[proc.key] && (
+                <div className="px-6 pb-8 border-t border-gray-100 pt-6 anim-slide-down">
+                  <p className="text-gray-700 mb-6 max-w-4xl text-sm leading-relaxed">{proc.desc}</p>
+                  <div className="space-y-6">
+                    {proc.steps.map(step => (
+                      <div key={step.id} className="flex flex-col md:flex-row gap-5 items-start">
+                        <div className={`w-16 h-16 rounded-full flex-shrink-0 flex items-center justify-center border-4 border-white shadow-md ${step.bg}`} style={{color:step.color}}>
+                          <Icon name={step.iconName} size={28}/>
+                        </div>
+                        <div className={`flex-1 rounded-2xl p-5 border ${step.bg} ${step.border}`}>
+                          <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
+                            <h3 className="text-base font-bold">Step {step.id}: {step.title}</h3>
+                            <span className="text-xs font-bold px-2 py-0.5 rounded bg-white border border-gray-200 text-gray-500 whitespace-nowrap">{step.layer}</span>
+                          </div>
+                          <p className="text-gray-700 text-sm leading-relaxed">{step.description}</p>
+                          {step.codeSnippet && (
+                            <div className="mt-3 bg-gray-900 rounded-xl p-4 overflow-x-auto">
+                              <pre className="text-emerald-400 text-xs font-mono leading-relaxed">{step.codeSnippet}</pre>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ─── AGENT FACTORY ─────────────────────────────────────────────────── */}
+      {activeTab === 'factory' && (
+        <div className="max-w-7xl mx-auto pb-12 anim-fade">
+          <h2 className="text-xl font-bold mb-1">Agent Factory & SDLC Pipeline</h2>
+          <p className="text-gray-500 text-sm mb-6 max-w-3xl">Manage the lifecycle of AI agents. Select any agent to visualize its solution design and banking MCP integrations.</p>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className={`flex flex-col gap-4 ${selectedAgentId?'lg:col-span-5':'lg:col-span-12'}`}>
+              <div className={`grid gap-4 ${selectedAgentId?'grid-cols-1':'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
+                {agentsCatalog.map(agent => {
+                  const isSel = selectedAgentId===agent.id;
+                  return (
+                    <div key={agent.id} onClick={()=>setSelectedAgentId(isSel?null:agent.id)}
+                      className={`bg-white rounded-xl border p-4 cursor-pointer transition-all shadow-sm ${isSel?'border-blue-500 ring-1 ring-blue-500':'border-gray-200 hover:border-blue-300 hover:shadow-md'}`}>
+                      <div className="flex justify-between items-start mb-3">
+                        <div className={`p-2 rounded-lg ${isSel?'bg-blue-50 text-blue-600':'bg-gray-100 text-gray-600'}`}>
+                          <Icon name={agent.iconName} size={18}/>
+                        </div>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${agent.status==='Production'?'bg-emerald-100 text-emerald-800':agent.status==='In Development'?'bg-blue-100 text-blue-800':'bg-slate-100 text-slate-800'}`}>
+                          {agent.status}
+                        </span>
+                      </div>
+                      <h3 className="font-bold text-gray-900 text-base mb-1">{agent.name}</h3>
+                      <p className="text-sm text-gray-500 mb-3">{agent.intent}</p>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="text-xs font-bold bg-gray-50 text-gray-600 border border-gray-200 px-2 py-0.5 rounded">{agent.model}</span>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded border ${agent.riskTier==='High'?'bg-rose-50 text-rose-700 border-rose-200':agent.riskTier==='Medium'?'bg-amber-50 text-amber-700 border-amber-200':'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
+                          Risk: {agent.riskTier}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            {selectedAgent && (
+              <div className="lg:col-span-7 anim-slide-right">
+                <div className="sticky top-4 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden" style={{maxHeight:'85vh',display:'flex',flexDirection:'column'}}>
+                  <div className="p-5 border-b border-gray-100 bg-gray-50 flex items-start justify-between">
+                    <div>
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${selectedAgent.status==='Production'?'bg-emerald-200 text-emerald-900':selectedAgent.status==='In Development'?'bg-blue-200 text-blue-900':'bg-slate-200 text-slate-900'}`}>
+                        {selectedAgent.status}
+                      </span>
+                      <h2 className="text-xl font-bold text-gray-900 mt-2">{selectedAgent.name}</h2>
+                      <p className="text-sm text-gray-600">{selectedAgent.intent}</p>
+                    </div>
+                    <button onClick={()=>setSelectedAgentId(null)} className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-200 rounded-full">
+                      <Icon name="X" size={18}/>
+                    </button>
+                  </div>
+                  <div className="p-5 overflow-y-auto flex-1">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                      <Icon name="Lightbulb" size={14}/> Business Solution Design
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {selectedAgent.businessDesign.map((sec,i)=>(
+                        <div key={i} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                          <div className={`p-2.5 border-b flex items-center gap-2 ${sec.color}`}>
+                            <Icon name={sec.iconName} size={14} className="flex-shrink-0"/>
+                            <h4 className="text-xs font-bold uppercase tracking-wider">{sec.category}</h4>
+                          </div>
+                          <div className="p-3 bg-gray-50">
+                            <ul className="space-y-1.5">
+                              {sec.items.map((item,j)=>(
+                                <li key={j} className="text-xs text-gray-700 flex items-start gap-2">
+                                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 bg-gray-400 inline-block"></span>
+                                  {item}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 p-3 bg-gray-50 border border-gray-100 rounded-xl">
+                      <p className="text-xs text-gray-500 flex items-center gap-2">
+                        <Icon name="ShieldCheck" size={13} className="text-blue-500"/>
+                        This agent inherits all security & compliance guardrails defined in the core Platform Architecture (APIM, AI Gateway, Nemo Guardrails, OTel tracing).
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ─── TRUST CENTER ──────────────────────────────────────────────────── */}
+      {activeTab === 'dashboard' && (
+        <div className="max-w-7xl mx-auto space-y-5 pb-12 anim-fade">
+          <div><h2 className="text-xl font-bold">AI Trust & Operations Center</h2><p className="text-gray-500 text-sm">Real-time observability and governance for autonomous agents in production.</p></div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { label:"Active Agents",           value:"2",     sub:"+1 this week",              subC:"text-emerald-600", iconName:"Activity",  iconC:"text-blue-500" },
+              { label:"Guardrail Interventions",  value:"128",   sub:"Requires review",           subC:"text-rose-600",    iconName:"ShieldBan", iconC:"text-rose-500" },
+              { label:"Avg Gateway Latency",      value:"845ms", sub:"p99 across all providers",  subC:"text-gray-500",    iconName:"Clock",     iconC:"text-amber-500" },
+              { label:"Model Consistency",        value:"99.2%", sub:"Deviation below 1%",        subC:"text-gray-500",    iconName:"Target",    iconC:"text-emerald-500" },
+            ].map((k,i)=>(
+              <div key={i} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-xs font-bold text-gray-500 uppercase">{k.label}</span>
+                  <Icon name={k.iconName} size={16} className={k.iconC}/>
+                </div>
+                <div className="text-2xl font-black text-gray-900">{k.value}</div>
+                <div className={`text-xs font-medium mt-0.5 ${k.subC}`}>{k.sub}</div>
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col">
+              <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                <h3 className="font-bold text-gray-900 flex items-center gap-2 text-sm"><Icon name="AlertTriangle" size={15} className="text-amber-500"/> Active Incidents</h3>
+                <span className="text-xs font-bold px-2 py-0.5 bg-rose-50 text-rose-600 rounded-full">{recentIncidents.length} New</span>
+              </div>
+              <div className="p-3 flex-1 overflow-y-auto space-y-3">
+                {recentIncidents.map((inc,i)=>(
+                  <div key={i} className="border border-gray-100 rounded-lg p-3 bg-gray-50">
+                    <div className="flex justify-between items-start mb-1.5">
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded border uppercase tracking-wider ${inc.color}`}>{inc.type}</span>
+                      <span className="text-xs text-gray-400">{inc.time}</span>
+                    </div>
+                    <div className="text-xs font-bold text-gray-900 mb-0.5">Agent: {inc.agent}</div>
+                    <p className="text-xs text-gray-600">{inc.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col">
+              <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                <h3 className="font-bold text-gray-900 flex items-center gap-2 text-sm"><Icon name="ListChecks" size={15} className="text-blue-500"/> Live Agent Execution Log</h3>
+                <div className="flex items-center gap-2">
+                  <span className="flex h-2 w-2 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                  <span className="text-xs text-gray-500 font-bold uppercase">Live</span>
+                </div>
+              </div>
+              <div className="flex-1 overflow-x-auto">
+                <table className="w-full text-left" style={{minWidth:'480px'}}>
+                  <thead><tr className="bg-gray-50 border-b border-gray-100">
+                    {['TX ID','Agent / Intent','Model','Status','Latency'].map((h,i)=>(
+                      <th key={i} className={`p-3 text-xs font-bold text-gray-500 uppercase tracking-wider ${i===4?'text-right':''}`}>{h}</th>
+                    ))}
+                  </tr></thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {agentExecutions.map((tx,i)=>(
+                      <tr key={i} className="hover:bg-gray-50">
+                        <td className="p-3 text-xs font-mono text-gray-500">{tx.id}</td>
+                        <td className="p-3"><div className="text-xs font-bold text-gray-900">{tx.agent}</div><div className="text-xs text-gray-500">{tx.intent}</div></td>
+                        <td className="p-3 text-xs text-gray-700">{tx.model}</td>
+                        <td className="p-3"><span className={`text-xs font-bold px-2 py-0.5 rounded ${tx.statusColor}`}>{tx.status}</span></td>
+                        <td className="p-3 text-right text-xs font-mono text-gray-600">{tx.duration}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── COST CENTER ───────────────────────────────────────────────────── */}
+      {activeTab === 'cost' && (
+        <div className="max-w-7xl mx-auto space-y-5 pb-12 anim-fade">
+          <div><h2 className="text-xl font-bold">AI FinOps & Cost Center</h2><p className="text-gray-500 text-sm">Monitor LLM API consumption and attribute AI spend to specific agents and providers.</p></div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { label:"Total Monthly Spend",      value:"$7,740", sub:"+14% vs last month",        subC:"text-rose-600",    iconName:"DollarSign", iconC:"text-blue-500" },
+              { label:"Avg Cost per TX",           value:"$0.042", sub:"-8% efficiency gain",       subC:"text-emerald-600", iconName:"PieChart",   iconC:"text-indigo-500" },
+              { label:"Most Expensive Agent",      value:"finance_bot_v2", sub:"$3,120 (40.3% of total)", subC:"text-gray-500", iconName:"Users", iconC:"text-orange-500" },
+              { label:"Projected Annual Run Rate", value:"$92.8k", sub:"Based on current velocity", subC:"text-gray-500",    iconName:"BarChart3",  iconC:"text-teal-500" },
+            ].map((k,i)=>(
+              <div key={i} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-xs font-bold text-gray-500 uppercase">{k.label}</span>
+                  <Icon name={k.iconName} size={16} className={k.iconC}/>
+                </div>
+                <div className="text-xl font-black text-gray-900 truncate">{k.value}</div>
+                <div className={`text-xs font-medium mt-0.5 ${k.subC}`}>{k.sub}</div>
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+              <div className="p-4 border-b border-gray-100"><h3 className="font-bold text-gray-900 flex items-center gap-2 text-sm"><Icon name="Cloud" size={15} className="text-blue-500"/> Spend by Model Provider</h3></div>
+              <div className="p-4 space-y-4">
+                {costByProvider.map((p,i)=>(
+                  <div key={i}>
+                    <div className="flex justify-between mb-0.5"><span className="text-sm font-bold text-gray-800">{p.provider}</span><span className="text-sm font-bold">{p.spend}</span></div>
+                    <div className="flex justify-between mb-1.5"><span className="text-xs text-gray-500">{p.tokens} tokens</span><span className="text-xs text-gray-500 font-medium">{p.percentage}%</span></div>
+                    <div className="w-full bg-gray-100 rounded-full h-2"><div className={`${p.color} h-2 rounded-full`} style={{width:`${p.percentage}%`}}></div></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+              <div className="p-4 border-b border-gray-100"><h3 className="font-bold text-gray-900 flex items-center gap-2 text-sm"><Icon name="Activity" size={15} className="text-indigo-500"/> Spend by Agent</h3></div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left" style={{minWidth:'380px'}}>
+                  <thead><tr className="bg-gray-50 border-b border-gray-100">
+                    {['Agent','Model','Trend','Spend'].map((h,i)=>(
+                      <th key={i} className={`p-3 text-xs font-bold text-gray-500 uppercase tracking-wider ${i===3?'text-right':''}`}>{h}</th>
+                    ))}
+                  </tr></thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {costByAgent.map((a,i)=>(
+                      <tr key={i} className="hover:bg-gray-50">
+                        <td className="p-3 text-xs font-bold text-gray-900">{a.agent}</td>
+                        <td className="p-3"><span className="text-xs font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded">{a.primaryModel}</span></td>
+                        <td className="p-3"><span className={`text-xs font-bold flex items-center gap-1 ${a.trend==='up'?'text-rose-600':'text-emerald-600'}`}>
+                          <Icon name={a.trend==='up'?'TrendingUp':'TrendingDown'} size={12}/>{a.trendValue}
+                        </span></td>
+                        <td className="p-3 text-right text-xs font-bold text-gray-900">{a.spend}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── COMPLIANCE INHERITANCE MODEL ──────────────────────────────────── */}
+      {activeTab === 'compliance' && (() => {
+        const ca = complianceAgents.find(a => a.id === complianceAgentId);
+        const cc = complianceCountries[complianceCountry];
+
+        const stateCard = (state) => {
+          if (state==='active')  return 'bg-green-50 border-green-200';
+          if (state==='warn')    return 'bg-amber-50 border-amber-200';
+          if (state==='na')      return 'bg-gray-50 border-gray-200 opacity-40';
+          if (state==='country') return 'bg-yellow-50 border-yellow-200';
+          return 'bg-blue-50 border-blue-200';
+        };
+        const stateDot = (state) => {
+          if (state==='active')  return '#10b981';
+          if (state==='warn')    return '#f59e0b';
+          if (state==='na')      return '#d1d5db';
+          if (state==='country') return '#eab308';
+          return '#0D74CE';
+        };
+        const stateTag = (state) => {
+          if (state==='active')  return 'bg-green-100 text-green-800';
+          if (state==='warn')    return 'bg-amber-100 text-amber-800';
+          if (state==='na')      return 'bg-gray-100 text-gray-500';
+          if (state==='country') return 'bg-yellow-100 text-yellow-800';
+          return 'bg-blue-100 text-blue-800';
+        };
+
+        // Replace 'country' slots with jurisdiction regs in order
+        let countryIdx = 0;
+        const resolvedControls = ca.base.map(ctrl => {
+          if (ctrl.state === 'country' && countryIdx < cc.regs.length) {
+            const cr = cc.regs[countryIdx++];
+            return { name: cr.name, desc: cr.desc, state: 'country', trigger: cr.tag };
+          }
+          return ctrl;
+        });
+        while (countryIdx < cc.regs.length) {
+          const cr = cc.regs[countryIdx++];
+          resolvedControls.push({ name: cr.name, desc: cr.desc, state: 'country', trigger: cr.tag });
+        }
+
+        return (
+          <div className="max-w-7xl mx-auto pb-12 anim-fade">
+            {/* Header */}
+            <div className="mb-5">
+              <h2 className="text-xl font-bold">Compliance Inheritance Model</h2>
+              <p className="text-gray-500 text-sm">Platform baseline + agent-level + jurisdiction-specific activation</p>
+            </div>
+
+            {/* Selectors */}
+            <div className="flex flex-wrap gap-4 items-end mb-4">
+              <div>
+                <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Jurisdiction</div>
+                <select
+                  value={complianceCountry}
+                  onChange={e => setComplianceCountry(e.target.value)}
+                  className="appearance-none px-3 py-2 pr-8 rounded-lg border-2 border-gray-200 bg-white text-xs font-bold text-gray-900 cursor-pointer outline-none hover:border-blue-400 transition-colors"
+                  style={{backgroundImage:"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")",backgroundRepeat:'no-repeat',backgroundPosition:'right 10px center'}}
+                >
+                  <option value="PH">🇵🇭  Philippines (BSP)</option>
+                  <option value="MY">🇲🇾  Malaysia (BNM)</option>
+                  <option value="ANZ">🇦🇺  Australia / NZ (APRA)</option>
+                  <option value="VN">🇻🇳  Vietnam (SBV)</option>
+                </select>
+              </div>
+              <div>
+                <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Agent / Use Case</div>
+                <div className="flex gap-2 flex-wrap">
+                  {complianceAgents.map(a => {
+                    const rc = {High:'#dc2626',Medium:'#d97706',Low:'#059669'}[a.risk];
+                    return (
+                      <button key={a.id} onClick={() => { setComplianceAgentId(a.id); setComplianceCountry(a.defaultCountry); }}
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${complianceAgentId===a.id?'bg-blue-600 text-white border-blue-600':'bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-400'}`}>
+                        {a.label} <span style={{color: complianceAgentId===a.id?'#bfdbfe':rc, fontSize:'9px'}}>[{a.risk}]</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Jurisdiction banner */}
+            <div className="rounded-xl px-4 py-2.5 mb-5 text-xs border" style={{background:cc.bg, borderColor:cc.border, borderStyle:'dashed'}}>
+              <strong style={{color:cc.color}}>{cc.flag} {cc.name} — {cc.regulator}</strong>
+              <span className="text-gray-600 ml-2">{cc.note}</span>
+            </div>
+
+            {/* ── Platform Tier ── */}
+            <div className="rounded-2xl border-2 border-blue-200 overflow-hidden mb-3">
+              <div className="bg-blue-50 border-b-2 border-blue-200 px-4 py-3 flex items-center gap-2">
+                <Icon name="Layers" size={14} className="text-blue-600"/>
+                <div>
+                  <div className="text-xs font-bold text-blue-800">Platform Layer — Inherited Controls</div>
+                  <div className="text-xs text-blue-500">Always-on · Every agent inherits these automatically · No configuration needed</div>
+                </div>
+              </div>
+              <div className="p-4 bg-blue-50/30">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                  {platformControls.map((ctrl,i)=>(
+                    <div key={i} className="bg-blue-50 border border-blue-200 rounded-xl p-3 relative">
+                      <div className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full" style={{background:'#0D74CE'}}></div>
+                      <div className="text-xs font-bold text-gray-900 pr-3 mb-1">{ctrl.name}</div>
+                      <div className="text-xs text-gray-500 leading-snug">{ctrl.desc}</div>
+                      <span className="inline-block mt-2 text-xs font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-800">Always On</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Arrow */}
+            <div className="flex items-center justify-center gap-3 my-2 text-xs font-semibold text-blue-500">
+              <div className="flex-1 max-w-24 h-px bg-blue-200"></div>
+              <Icon name="ChevronDown" size={14} className="text-blue-400"/>
+              <span>agent inherits all platform controls, then activates additional standards based on use case + jurisdiction</span>
+              <Icon name="ChevronDown" size={14} className="text-blue-400"/>
+              <div className="flex-1 max-w-24 h-px bg-blue-200"></div>
+            </div>
+
+            {/* ── Agent Tier ── */}
+            <div className="rounded-2xl border-2 border-purple-200 overflow-hidden mt-3">
+              <div className="bg-purple-50 border-b-2 border-purple-200 px-4 py-3 flex items-center gap-2">
+                <Icon name="Bot" size={14} className="text-purple-600"/>
+                <div>
+                  <div className="text-xs font-bold text-purple-800">{ca.label} — Context-Activated Controls</div>
+                  <div className="text-xs text-purple-500">Risk: {ca.risk} · Jurisdiction: {cc.name} ({cc.regulator})</div>
+                </div>
+              </div>
+              <div className="p-4 bg-purple-50/20">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {resolvedControls.map((ctrl,i)=>(
+                    <div key={i} className={`rounded-xl p-3 border relative ${stateCard(ctrl.state)}`}>
+                      <div className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full" style={{background:stateDot(ctrl.state)}}></div>
+                      <div className="text-xs font-bold text-gray-900 pr-4 mb-1">{ctrl.name}</div>
+                      <div className="text-xs text-gray-500 leading-snug">{ctrl.desc}</div>
+                      <span className={`inline-block mt-2 text-xs font-bold px-1.5 py-0.5 rounded ${stateTag(ctrl.state)}`}>{ctrl.trigger}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 text-xs text-gray-500 italic border-t border-gray-100 pt-3">
+                  <Icon name="AlertTriangle" size={11} className="inline mr-1 text-amber-500"/>
+                  <strong>Agent owner obligation:</strong> {ca.note}
+                </div>
+              </div>
+            </div>
+
+            {/* Legend */}
+            <div className="flex gap-4 flex-wrap mt-4 p-3 bg-white rounded-xl border border-gray-200 text-xs font-semibold text-gray-500">
+              {[
+                {dot:'#0D74CE', label:'Platform — Always On'},
+                {dot:'#10b981', label:'Activated (use case)'},
+                {dot:'#eab308', label:'Jurisdiction-specific'},
+                {dot:'#f59e0b', label:'Partial / In Progress'},
+                {dot:'#d1d5db', label:'Not Applicable'},
+              ].map((l,i)=>(
+                <div key={i} className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full" style={{background:l.dot}}></div>
+                  {l.label}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>
